@@ -1,0 +1,7 @@
+libfreenect/
+__pycache__/
+*.jpg
+!template.jpg
+*.swp
+.ipynb_checkpoints/
+
