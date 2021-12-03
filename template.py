@@ -30,7 +30,8 @@ class Template_Matcher:
             # resize the image according to the scale, and keep track
             # of the ratio of the resizing
             resized = imutils.resize(mat, width = int(mat.shape[1] * scale))
-            r = mat.shape[1]/float(resized.shape[1])
+            # r = mat.shape[1]/float(resized.shape[1])
+            r = scale
             ret.append((resized, r))
         return ret
    
