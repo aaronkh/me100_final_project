@@ -1,4 +1,3 @@
-C:\Users\Aaron\me100_kinect\app\me100_kinect\bin\Debug\me100_kinect.exe.config
 C:\Users\Aaron\me100_kinect\app\me100_kinect\bin\Debug\me100_kinect.exe
 C:\Users\Aaron\me100_kinect\app\me100_kinect\bin\Debug\me100_kinect.pdb
 C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\me100_kinect.csprojResolveAssemblyReference.cache
@@ -6,3 +5,8 @@ C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\me100_kinect.Properties.R
 C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\me100_kinect.csproj.GenerateResource.Cache
 C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\me100_kinect.exe
 C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\me100_kinect.pdb
+C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\MainWindow.baml
+C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\App.g.cs
+C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\MainWindow.g.cs
+C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\me100_kinect_MarkupCompile.cache
+C:\Users\Aaron\me100_kinect\app\me100_kinect\obj\Debug\me100_kinect.g.resources
