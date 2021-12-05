@@ -7,15 +7,17 @@ using Microsoft.Kinect;
 using System.Windows.Media;
 using System.Windows;
 using System.Diagnostics;
+using System.Windows.Media.Imaging;
+using System.Drawing.Imaging;
 
-namespace me100_kinect
-{
-    class ArmTracker : KinectController
-    {
+namespace me100_kinect {
+    class ArmTracker : KinectController {
         /// <summary>
         /// Thickness of drawn joint lines
         /// </summary>
         private const double JointThickness = 3;
+
+        private readonly Brush translucentBrush = new SolidColorBrush(Color.FromArgb(99, 0, 0, 0));
 
         /// <summary>
         /// Brush used for drawing joints that are currently tracked
@@ -44,14 +46,19 @@ namespace me100_kinect
         /// </summary>        
         private readonly Pen inferredBonePen = new Pen(Brushes.Gray, 1);
 
+
+
         public ArmTracker(KinectSensor sensor): base(sensor) { }
 
         public override void initialize() {
             // Turn on the skeleton stream to receive skeleton frames
             this.sensor.SkeletonStream.Enable();
+            this.sensor.ColorStream.Enable(ColorImageFormat.RgbResolution1280x960Fps12);
 
             // Add an event handler to be called whenever there is new color frame data
             this.sensor.SkeletonFrameReady += this.SensorSkeletonFrameReady;
+            this.sensor.SkeletonStream.EnableTrackingInNearRange = true;
+            this.sensor.ColorFrameReady += drawColorFrame;
         }
 
         public override object performAction() { return null; }
@@ -128,8 +135,32 @@ namespace me100_kinect
 
                 if (drawBrush != null) 
                     drawingContext.DrawEllipse(drawBrush, null, this.skeletonPointToScreen(joint.Position), JointThickness, JointThickness);
-                
             }
+        }
+
+
+
+        private WriteableBitmap colorBitmap;
+        private byte[] colorPixels; 
+        private void drawColorFrame(object _, ColorImageFrameReadyEventArgs e) { 
+            using (ColorImageFrame colorFrame = e.OpenColorImageFrame()) {
+                if (colorFrame != null) {
+                    if(colorPixels == null)
+                        colorPixels = new byte[this.sensor.ColorStream.FramePixelDataLength];
+                    colorFrame.CopyPixelDataTo(colorPixels);
+                    
+                    if(colorBitmap == null) 
+                        colorBitmap = 
+                            new WriteableBitmap(
+                                this.sensor.ColorStream.FrameWidth, 
+                                this.sensor.ColorStream.FrameHeight, 
+                                96.0, 96.0, PixelFormats.Bgr32, null);
+                    colorBitmap.WritePixels(
+                      new Int32Rect(0, 0, colorBitmap.PixelWidth, colorBitmap.PixelHeight),
+                          colorPixels,
+                          colorBitmap.PixelWidth * sizeof(int), 0);
+                }
+            }  
         }
 
         /* * * * * * * * * * *
@@ -150,8 +181,16 @@ namespace me100_kinect
             }
 
             using (DrawingContext dc = this.draw.Open()) {
-                // Draw a transparent background to set the render size
                 dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, this.drawWidth, this.drawHeight));
+
+                if (colorBitmap != null) {
+                    dc.DrawImage(
+                        colorBitmap,
+                        new Rect(0.0d, 0.0d, drawWidth, drawHeight));
+                }
+
+                // Dim video stream
+                dc.DrawRectangle(translucentBrush, null, new Rect(0.0, 0.0, this.drawWidth, this.drawHeight));
 
                 if (skeletons.Length != 0) {
                     foreach (Skeleton skel in skeletons) {
@@ -162,6 +201,8 @@ namespace me100_kinect
 
                 // prevent drawing outside of our render area
                 this.draw.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, drawWidth, drawHeight));
+
+                
             }
         }
 
@@ -170,8 +211,7 @@ namespace me100_kinect
         /// </summary>
         /// <param name="skelpoint">point to map</param>
         /// <returns>mapped point</returns>
-        private Point skeletonPointToScreen(SkeletonPoint skelpoint)
-        {
+        private Point skeletonPointToScreen(SkeletonPoint skelpoint) {
             // Convert point to depth space.  
             // We are not using depth directly, but we do want the points in our 640x480 output resolution.
             DepthImagePoint depthPoint = this.sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(skelpoint, DepthImageFormat.Resolution640x480Fps30);
