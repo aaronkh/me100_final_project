@@ -1,11 +1,4 @@
-﻿//------------------------------------------------------------------------------
-// <copyright file="MainWindow.xaml.cs" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
-namespace me100_kinect
-{
+﻿namespace me100_kinect {
     using System.IO;
     using System.Windows;
     using System.Windows.Media;
@@ -13,6 +6,7 @@ namespace me100_kinect
     using System.Windows.Input;
     using System.Collections.Generic;
     using Microsoft.Kinect;
+    using System.Diagnostics;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -40,9 +34,9 @@ namespace me100_kinect
          * LIFECYCLE METHODS *
          *                   *
          * * * * * * * * * * */
+
         public MainWindow() {
             InitializeComponent();
-            this.currentMode = MODE.OBJECT_DETECTION;
         }
         
         private void WindowLoaded(object sender, RoutedEventArgs e) {
@@ -77,8 +71,11 @@ namespace me100_kinect
                 // Start the sensor!
                 try {
                     this.sensor.Start();
-                } catch (IOException) {
+                    setMode(MODE.OBJECT_DETECTION);
+                } catch (IOException err) {
                     this.sensor = null;
+                    this.statusBarText.Text = "Error opening Kinect";
+                    Trace.WriteLine(err);
                 }
             }
 
@@ -93,9 +90,10 @@ namespace me100_kinect
         }
 
         private void onKeyPress(object _, KeyEventArgs e) {
-            Console.WriteLine(e.Key);
-            switch (e.Key)
-            {
+            switch (e.Key) {
+                case Key.Escape:
+                    Close();
+                    return;
                 case Key.Space:
                     // Main action
                     setBlocked(true);
@@ -104,23 +102,29 @@ namespace me100_kinect
                     return;
                 case Key.M:
                     // Switch modes
-                    if (this.currentMode == MODE.OBJECT_DETECTION)
-                        this.currentMode = MODE.BODY_TRACKING;
-                    else
-                        this.currentMode = MODE.OBJECT_DETECTION;
+                    setMode(this.currentMode == MODE.OBJECT_DETECTION? 
+                        MODE.BODY_TRACKING : MODE.OBJECT_DETECTION);
                     return;
                 case Key.P:
                     // Write to file
                     return;
-                case Key.R:
-                    // Restart program
-                    return;
             }
         }
+
+        /* * * * * * * * * *
+         *                 *
+         * GETTERS/SETTERS *
+         *                 *
+         * * * * * * * * * */
 
         private void setBlocked(bool blocked) {
             foreach (KeyValuePair<string, KinectController> entry in this.controllers)
                 entry.Value.blocked = blocked;
+        }
+
+        private void setMode(string mode) {
+            this.currentMode = mode;
+            this.statusBarText.Text = this.currentMode;
         }
     }
 
