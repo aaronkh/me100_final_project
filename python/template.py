@@ -40,4 +40,7 @@ class Template_Matcher:
         result = cv2.matchTemplate(mat, template, cv2.TM_CCORR_NORMED)
         (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
         return (maxVal, maxLoc)
+    
+    def open_image(self, path):
+        return cv2.imread(path)
 
