@@ -1,40 +1,22 @@
-﻿using System;
+﻿using Microsoft.Kinect;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Kinect;
-using System.Windows.Media;
-using System.Windows;
 using System.Diagnostics;
+using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Drawing.Imaging;
 
 namespace me100_kinect {
     class ArmTracker : KinectController {
         public override string mode { get { return "Body tracking"; } }
 
-        /// <summary>
-        /// Thickness of drawn joint lines
-        /// </summary>
-        private const double JointThickness = 3;
-
         private readonly Brush translucentBrush = new SolidColorBrush(Color.FromArgb(99, 0, 0, 0));
 
-        /// <summary>
-        /// Brush used for drawing joints that are currently tracked
-        /// </summary>
+        private const double JointThickness = 3;
         private readonly Brush trackedJointBrush = new SolidColorBrush(Color.FromArgb(255, 68, 192, 68));
-
-        /// <summary>
-        /// Brush used for drawing joints that are currently inferred
-        /// </summary>        
         private readonly Brush inferredJointBrush = Brushes.Yellow;
 
-        /// <summary>
-        /// Pen used for drawing bones that are currently tracked
-        /// </summary>
         private readonly Pen trackedBonePen = new Pen(Brushes.Green, 6);
+        private readonly Pen inferredBonePen = new Pen(Brushes.Gray, 1);
 
         private readonly HashSet<JointType> armJoints = new HashSet<JointType> {
             JointType.ElbowLeft,
@@ -42,13 +24,6 @@ namespace me100_kinect {
             JointType.HandLeft,
             JointType.HandRight
         };
-
-        /// <summary>
-        /// Pen used for drawing bones that are currently inferred
-        /// </summary>        
-        private readonly Pen inferredBonePen = new Pen(Brushes.Gray, 1);
-
-        
 
         public ArmTracker(KinectSensor sensor): base(sensor) { }
 
@@ -70,13 +45,6 @@ namespace me100_kinect {
         * DRAWING METHODS *
         *                 *
         * * * * * * * * * */
-        /// <summary>
-        /// Draws a bone line between two joints
-        /// </summary>
-        /// <param name="skeleton">skeleton to draw bones from</param>
-        /// <param name="drawingContext">drawing context to draw to</param>
-        /// <param name="jointType0">joint to start drawing from</param>
-        /// <param name="jointType1">joint to end drawing at</param>
         private void drawBone(
             Skeleton skeleton, 
             DrawingContext drawingContext, 
@@ -146,7 +114,6 @@ namespace me100_kinect {
          * KINECT CALLBACKS  *
          *                   *
          * * * * * * * * * * */
-
         private void SensorSkeletonFrameReady(object _, SkeletonFrameReadyEventArgs e) {
             if (blocked) return;
 
@@ -187,8 +154,7 @@ namespace me100_kinect {
         }
         private WriteableBitmap colorBitmap;
         private byte[] colorPixels;
-        private void colorFrameReady(object _, ColorImageFrameReadyEventArgs e)
-        {
+        private void colorFrameReady(object _, ColorImageFrameReadyEventArgs e) {
             if (blocked) return;
             using (ColorImageFrame colorFrame = e.OpenColorImageFrame())
             {
@@ -212,11 +178,6 @@ namespace me100_kinect {
             }
         }
 
-        /// <summary>
-        /// Maps a SkeletonPoint to lie within our render space and converts to Point
-        /// </summary>
-        /// <param name="skelpoint">point to map</param>
-        /// <returns>mapped point</returns>
         private Point skeletonPointToScreen(SkeletonPoint skelpoint) {
             // Convert point to depth space.  
             // We are not using depth directly, but we do want the points in our 640x480 output resolution.
@@ -225,3 +186,4 @@ namespace me100_kinect {
         }
     }
 }
+

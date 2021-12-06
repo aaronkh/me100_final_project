@@ -95,7 +95,6 @@
                     // Main action
                     for (int i = 0; i < this.controllers.Length; ++i) 
                         this.controllers[i].performAction();
-
                     return;
                 case Key.M:
                     // Switch modes
@@ -112,11 +111,8 @@
          * GETTERS/SETTERS *
          *                 *
          * * * * * * * * * */
-
-        private void setStatusBarText(string text) { 
-            if(this.statusBarText != null) 
-                this.statusBarText.Text = text;
-        }
+        
+        //
 
         /* * * * * * * * * *
          *                 *
@@ -135,7 +131,7 @@
             for (int i = 0; i < this.controllers.Length; ++i) { 
                 if(i == this.currentMode) {
                     this.controllers[i].blocked = false;
-                    setStatusBarText(this.controllers[i].mode);
+                    this.statusBarText.Text = this.controllers[i].mode;
                 } else {
                     this.controllers[i].blocked = true;
                 }

@@ -4,6 +4,7 @@ __pycache__/
 !template.jpg
 *.swp
 .ipynb_checkpoints/
+python/env/
 
 # C-sharp gitignore: https://gist.github.com/kmorcinek/2710267
 # ------------
