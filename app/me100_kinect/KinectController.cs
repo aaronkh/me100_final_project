@@ -18,6 +18,8 @@ namespace me100_kinect
 
         public bool blocked;
 
+        public abstract string mode {get;}
+
         protected KinectController(KinectSensor sensor) {
             this.sensor = sensor;
             this.blocked = false;

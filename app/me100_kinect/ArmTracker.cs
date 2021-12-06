@@ -12,6 +12,8 @@ using System.Drawing.Imaging;
 
 namespace me100_kinect {
     class ArmTracker : KinectController {
+        public override string mode { get { return "Body tracking"; } }
+
         /// <summary>
         /// Thickness of drawn joint lines
         /// </summary>
@@ -46,7 +48,7 @@ namespace me100_kinect {
         /// </summary>        
         private readonly Pen inferredBonePen = new Pen(Brushes.Gray, 1);
 
-
+        
 
         public ArmTracker(KinectSensor sensor): base(sensor) { }
 
@@ -58,7 +60,7 @@ namespace me100_kinect {
             // Add an event handler to be called whenever there is new color frame data
             this.sensor.SkeletonFrameReady += this.SensorSkeletonFrameReady;
             this.sensor.SkeletonStream.EnableTrackingInNearRange = true;
-            this.sensor.ColorFrameReady += drawColorFrame;
+            this.sensor.ColorFrameReady += colorFrameReady;
         }
 
         public override object performAction() { return null; }
@@ -111,7 +113,7 @@ namespace me100_kinect {
             drawingContext.DrawLine(drawPen, this.skeletonPointToScreen(joint0.Position), this.skeletonPointToScreen(joint1.Position));
         }
 
-        private void drawArms(Skeleton skeleton, DrawingContext drawingContext) {
+        private void drawArmsAndColor(Skeleton skeleton, DrawingContext drawingContext) {
 
             // Left Arm
             // this.drawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft);
@@ -139,30 +141,6 @@ namespace me100_kinect {
         }
 
 
-
-        private WriteableBitmap colorBitmap;
-        private byte[] colorPixels; 
-        private void drawColorFrame(object _, ColorImageFrameReadyEventArgs e) { 
-            using (ColorImageFrame colorFrame = e.OpenColorImageFrame()) {
-                if (colorFrame != null) {
-                    if(colorPixels == null)
-                        colorPixels = new byte[this.sensor.ColorStream.FramePixelDataLength];
-                    colorFrame.CopyPixelDataTo(colorPixels);
-                    
-                    if(colorBitmap == null) 
-                        colorBitmap = 
-                            new WriteableBitmap(
-                                this.sensor.ColorStream.FrameWidth, 
-                                this.sensor.ColorStream.FrameHeight, 
-                                96.0, 96.0, PixelFormats.Bgr32, null);
-                    colorBitmap.WritePixels(
-                      new Int32Rect(0, 0, colorBitmap.PixelWidth, colorBitmap.PixelHeight),
-                          colorPixels,
-                          colorBitmap.PixelWidth * sizeof(int), 0);
-                }
-            }  
-        }
-
         /* * * * * * * * * * *
          *                   *
          * KINECT CALLBACKS  *
@@ -170,6 +148,8 @@ namespace me100_kinect {
          * * * * * * * * * * */
 
         private void SensorSkeletonFrameReady(object _, SkeletonFrameReadyEventArgs e) {
+            if (blocked) return;
+
             Skeleton[] skeletons = new Skeleton[0];
 
             // Populate skeletons array
@@ -195,7 +175,7 @@ namespace me100_kinect {
                 if (skeletons.Length != 0) {
                     foreach (Skeleton skel in skeletons) {
                         if (skel.TrackingState == SkeletonTrackingState.Tracked)
-                            this.drawArms(skel, dc);
+                            this.drawArmsAndColor(skel, dc);
                     }
                 }
 
@@ -203,6 +183,32 @@ namespace me100_kinect {
                 this.draw.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, drawWidth, drawHeight));
 
                 
+            }
+        }
+        private WriteableBitmap colorBitmap;
+        private byte[] colorPixels;
+        private void colorFrameReady(object _, ColorImageFrameReadyEventArgs e)
+        {
+            if (blocked) return;
+            using (ColorImageFrame colorFrame = e.OpenColorImageFrame())
+            {
+                if (colorFrame != null)
+                {
+                    if (colorPixels == null)
+                        colorPixels = new byte[this.sensor.ColorStream.FramePixelDataLength];
+                    colorFrame.CopyPixelDataTo(colorPixels);
+
+                    if (colorBitmap == null)
+                        colorBitmap =
+                            new WriteableBitmap(
+                                this.sensor.ColorStream.FrameWidth,
+                                this.sensor.ColorStream.FrameHeight,
+                                96.0, 96.0, PixelFormats.Bgr32, null);
+                    colorBitmap.WritePixels(
+                      new Int32Rect(0, 0, colorBitmap.PixelWidth, colorBitmap.PixelHeight),
+                          colorPixels,
+                          colorBitmap.PixelWidth * sizeof(int), 0);
+                }
             }
         }
 

@@ -13,21 +13,15 @@
     /// </summary>
     public partial class MainWindow : Window {
 
-        private const float RenderWidth = 640.0f;
-        private const float RenderHeight = 480.0f;
-
         private KinectSensor sensor;
 
         private DrawingGroup drawingGroup;
-
-        /// <summary>
-        /// Drawing image that we will display
-        /// </summary>
         private DrawingImage imageSource;
+        private const float RenderWidth = 640.0f;
+        private const float RenderHeight = 480.0f;
 
-        private string currentMode;
-
-        private Dictionary<string, KinectController> controllers = new Dictionary<string,KinectController>();
+        private int currentMode = -1; // Start at -1 as 'loading'
+        private KinectController[] controllers;
 
         /* * * * * * * * * * *
          *                   *
@@ -60,18 +54,20 @@
             }
 
             if (this.sensor != null) {
-                this.controllers.Add(MODE.BODY_TRACKING, new ArmTracker(this.sensor));
-                this.controllers.Add(MODE.OBJECT_DETECTION, new TemplateMatcher(this.sensor));
+                this.controllers = new KinectController[2]{
+                    new TemplateMatcher(this.sensor),
+                    new ArmTracker(this.sensor)
+                };
 
-                foreach (KeyValuePair<string, KinectController> entry in this.controllers) {
-                    entry.Value.initialize();
-                    entry.Value.setRenderer(this.drawingGroup, RenderHeight, RenderWidth);
+                foreach (KinectController controller in this.controllers) {
+                    controller.initialize();
+                    controller.setRenderer(this.drawingGroup, RenderHeight, RenderWidth);
                 }
+                cycleModes();
 
                 // Start the sensor!
                 try {
                     this.sensor.Start();
-                    setMode(MODE.OBJECT_DETECTION);
                 } catch (IOException err) {
                     this.sensor = null;
                     this.statusBarText.Text = "Error opening Kinect";
@@ -86,7 +82,8 @@
 
         private void WindowClosing(object sender, System.ComponentModel.CancelEventArgs e) {
             if (this.sensor != null) this.sensor.Stop();
-            setBlocked(true);
+            for (int i = 0; i < this.controllers.Length; ++i)
+                this.controllers[i].blocked = true;
         }
 
         private void onKeyPress(object _, KeyEventArgs e) {
@@ -96,14 +93,13 @@
                     return;
                 case Key.Space:
                     // Main action
-                    setBlocked(true);
-                    this.controllers[this.currentMode].performAction();
-                    setBlocked(false);
+                    for (int i = 0; i < this.controllers.Length; ++i) 
+                        this.controllers[i].performAction();
+
                     return;
                 case Key.M:
                     // Switch modes
-                    setMode(this.currentMode == MODE.OBJECT_DETECTION? 
-                        MODE.BODY_TRACKING : MODE.OBJECT_DETECTION);
+                    cycleModes();
                     return;
                 case Key.P:
                     // Write to file
@@ -117,19 +113,33 @@
          *                 *
          * * * * * * * * * */
 
-        private void setBlocked(bool blocked) {
-            foreach (KeyValuePair<string, KinectController> entry in this.controllers)
-                entry.Value.blocked = blocked;
+        private void setStatusBarText(string text) { 
+            if(this.statusBarText != null) 
+                this.statusBarText.Text = text;
         }
 
-        private void setMode(string mode) {
-            this.currentMode = mode;
-            this.statusBarText.Text = this.currentMode;
-        }
-    }
+        /* * * * * * * * * *
+         *                 *
+         * HELPER METHODS  *
+         *                 *
+         * * * * * * * * * */
+        private void cycleModes() {
+            // Clear current image
+            using(DrawingContext dc = this.drawingGroup.Open())
+                dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, RenderWidth, RenderHeight));
+            
+            currentMode += 1;
+            if (currentMode >= controllers.Length)
+                currentMode = 0;
 
-    static class MODE { 
-        public const string OBJECT_DETECTION = "Object detection";
-        public const string BODY_TRACKING = "Body tracking";
+            for (int i = 0; i < this.controllers.Length; ++i) { 
+                if(i == this.currentMode) {
+                    this.controllers[i].blocked = false;
+                    setStatusBarText(this.controllers[i].mode);
+                } else {
+                    this.controllers[i].blocked = true;
+                }
+            }
+        }
     }
 }
