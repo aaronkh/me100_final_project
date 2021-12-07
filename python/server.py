@@ -4,7 +4,7 @@ import json
 import os
 app = Flask(__name__)
 
-app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 3 # 3MB max size
+# app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 3 # 3MB max size
 
 from template import Template_Matcher
 
