@@ -22,6 +22,8 @@ namespace me100_kinect {
             this.drawWidth = width;
         }
 
+        public virtual void saveImage(string path) { }
+         
         public abstract void initialize();
 
         public abstract object performAction();

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Kinect;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,6 +18,7 @@ namespace me100_kinect {
 
         private readonly Pen trackedBonePen = new Pen(Brushes.Green, 6);
         private readonly Pen inferredBonePen = new Pen(Brushes.Gray, 1);
+        private readonly Pen extendedBonePen = new Pen(Brushes.Magenta, 2);
 
         private readonly HashSet<JointType> armJoints = new HashSet<JointType> {
             JointType.ElbowLeft,
@@ -40,6 +42,19 @@ namespace me100_kinect {
 
         public override object performAction() { return null; }
 
+        public override void saveImage(string path) {
+            if (colorBitmap != null) {
+                // Save the bitmap into a file.
+                using (FileStream stream =
+                    new FileStream(path, FileMode.Create)) {
+                    BitmapEncoder encoder = new JpegBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(colorBitmap));
+                    encoder.Save(stream);
+                }
+            }
+        
+        }
+
         /* * * * * * * * * *
         *                 *
         * DRAWING METHODS *
@@ -53,21 +68,20 @@ namespace me100_kinect {
                 
             Joint joint0 = skeleton.Joints[jointType0];
             Trace.WriteLine(jointType0 + ": ");
-            Trace.WriteLine(joint0.Position.X + " ");
-            Trace.WriteLine(joint0.Position.Y + " ");
+            // Trace.WriteLine(joint0.Position.X + " ");
+            // Trace.WriteLine(joint0.Position.Y + " ");
             Trace.WriteLine(joint0.Position.Z + " ");
 
             Joint joint1 = skeleton.Joints[jointType1];
             Trace.WriteLine(jointType1 + ": ");
-            Trace.WriteLine(joint1.Position.X + " ");
-            Trace.WriteLine(joint1.Position.Y + " ");
+            // Trace.WriteLine(joint1.Position.X + " ");
+            // Trace.WriteLine(joint1.Position.Y + " ");
             Trace.WriteLine(joint1.Position.Z + " ");
 
             // If we can't find either of these joints, exit
             if (joint0.TrackingState == JointTrackingState.NotTracked ||
                 joint1.TrackingState == JointTrackingState.NotTracked) return;
             
-
             // Don't draw if both points are inferred
             // if (joint0.TrackingState == JointTrackingState.Inferred &&
             //    joint1.TrackingState == JointTrackingState.Inferred) return;
@@ -78,6 +92,7 @@ namespace me100_kinect {
                 joint1.TrackingState == JointTrackingState.Tracked)
                 drawPen = this.trackedBonePen;
 
+            this.drawRay(joint0.Position, joint1.Position, drawingContext, 0.0f);
             drawingContext.DrawLine(drawPen, this.skeletonPointToScreen(joint0.Position), this.skeletonPointToScreen(joint1.Position));
         }
 
@@ -92,7 +107,7 @@ namespace me100_kinect {
             // this.drawBone(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight);
             this.drawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight);
             // this.drawBone(skeleton, drawingContext, JointType.WristRight, JointType.HandRight);
-       
+
             // Render Joints (yellow = inferred, green = tracked)
             foreach (Joint joint in skeleton.Joints) {
                 Brush drawBrush = null;
@@ -108,6 +123,22 @@ namespace me100_kinect {
             }
         }
 
+        private void drawRay(
+            SkeletonPoint p1, SkeletonPoint p2, 
+            DrawingContext drawingContext, 
+            float intersection) {
+                SkeletonPoint endpoint;
+                if (p1.Z > p2.Z) 
+                    endpoint = Utils.extendLine(p1, p2, 0);
+                else if (p1.Z < p2.Z) 
+                    endpoint = Utils.extendLine(p1, p2, 10);
+                else return;
+                
+                drawingContext.DrawLine(
+                    extendedBonePen, 
+                    this.skeletonPointToScreen(p1), 
+                    this.skeletonPointToScreen(endpoint));
+        }
 
         /* * * * * * * * * * *
          *                   *
@@ -152,14 +183,13 @@ namespace me100_kinect {
                 
             }
         }
+
         private WriteableBitmap colorBitmap;
         private byte[] colorPixels;
         private void colorFrameReady(object _, ColorImageFrameReadyEventArgs e) {
             if (blocked) return;
-            using (ColorImageFrame colorFrame = e.OpenColorImageFrame())
-            {
-                if (colorFrame != null)
-                {
+            using (ColorImageFrame colorFrame = e.OpenColorImageFrame()) {
+                if (colorFrame != null) {
                     if (colorPixels == null)
                         colorPixels = new byte[this.sensor.ColorStream.FramePixelDataLength];
                     colorFrame.CopyPixelDataTo(colorPixels);

@@ -8,9 +8,6 @@
     using Microsoft.Kinect;
     using System.Diagnostics;
 
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window {
 
         private KinectSensor sensor;
@@ -32,7 +29,7 @@
         public MainWindow() {
             InitializeComponent();
         }
-        
+
         private void WindowLoaded(object sender, RoutedEventArgs e) {
             this.statusBarText.Text = "Loading...";
 
@@ -102,6 +99,7 @@
                     return;
                 case Key.P:
                     // Write to file
+                    this.controllers[currentMode].saveImage("out.jpg");
                     return;
             }
         }
