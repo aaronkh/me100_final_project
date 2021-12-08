@@ -42,20 +42,7 @@ namespace me100_kinect {
 
         public override object performAction() { return null; }
 
-        public override void saveImage(string path) {
-            if (colorBitmap != null) {
-                // Save the bitmap into a file.
-                using (FileStream stream =
-                    new FileStream(path, FileMode.Create)) {
-                    BitmapEncoder encoder = new JpegBitmapEncoder();
-                    encoder.Frames.Add(BitmapFrame.Create(colorBitmap));
-                    encoder.Save(stream);
-                }
-            }
-        
-        }
-
-        /* * * * * * * * * *
+       /* * * * * * * * * *
         *                 *
         * DRAWING METHODS *
         *                 *
@@ -184,8 +171,6 @@ namespace me100_kinect {
             }
         }
 
-        private WriteableBitmap colorBitmap;
-        private byte[] colorPixels;
         private void colorFrameReady(object _, ColorImageFrameReadyEventArgs e) {
             if (blocked) return;
             using (ColorImageFrame colorFrame = e.OpenColorImageFrame()) {

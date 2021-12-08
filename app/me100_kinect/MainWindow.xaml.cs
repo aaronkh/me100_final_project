@@ -9,7 +9,6 @@
     using System.Diagnostics;
 
     public partial class MainWindow : Window {
-
         private KinectSensor sensor;
 
         private DrawingGroup drawingGroup;
@@ -19,6 +18,7 @@
 
         private int currentMode = -1; // Start at -1 as 'loading'
         private KinectController[] controllers;
+        private List<DeviceLocation> deviceLocations = new List<DeviceLocation>();
 
         /* * * * * * * * * * *
          *                   *
@@ -57,6 +57,7 @@
                 };
 
                 foreach (KinectController controller in this.controllers) {
+                    controller.deviceLocations = deviceLocations;
                     controller.initialize();
                     controller.setRenderer(this.drawingGroup, RenderHeight, RenderWidth);
                 }

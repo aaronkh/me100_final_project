@@ -4,6 +4,9 @@ using System.Net.Http;
 
 namespace me100_kinect {
     static class HttpClientWrapper {
+        public const string PYTHON_API_ADDRESS = "http://localhost:2021";
+        public const string ESP32_IP = "192.168.1.1";
+
         private static HttpClient client;
 
         static HttpClient getInstance() {
