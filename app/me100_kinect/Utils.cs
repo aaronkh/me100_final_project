@@ -40,5 +40,6 @@ namespace me100_kinect {
 
             return ret;
         }
+
     }
 }

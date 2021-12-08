@@ -20,6 +20,9 @@ namespace me100_kinect {
         private readonly Pen inferredBonePen = new Pen(Brushes.Gray, 1);
         private readonly Pen extendedBonePen = new Pen(Brushes.Magenta, 2);
 
+        private readonly Pen deviceOnPen = new Pen(Brushes.Yellow, 2);
+        private readonly Pen deviceOffPen = new Pen(Brushes.Blue, 2);
+
         private readonly HashSet<JointType> armJoints = new HashSet<JointType> {
             JointType.ElbowLeft,
             JointType.ElbowRight, 
@@ -161,6 +164,13 @@ namespace me100_kinect {
                     foreach (Skeleton skel in skeletons) {
                         if (skel.TrackingState == SkeletonTrackingState.Tracked)
                             this.drawArmsAndColor(skel, dc);
+                    }
+                }
+
+                if (deviceLocations != null) {
+                    foreach (DeviceLocation loc in deviceLocations) {
+                        SkeletonPoint pt = loc.location;
+                        dc.DrawEllipse(null, loc.isOn?deviceOnPen:deviceOffPen, new Point(pt.X, pt.Y), 20, 20);
                     }
                 }
 

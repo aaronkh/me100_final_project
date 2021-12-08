@@ -6,10 +6,11 @@ class CircleDetector:
 	def __init__(self):
 		pass
 	def process(self, img):
+		cv2.imwrite('in.jpg', img)
 		hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 		## mask of green (36,25,25) ~ (86, 255,255)
 		# mask = cv2.inRange(hsv, (36, 25, 25), (86, 255,255))
-		mask = cv2.inRange(hsv, (36, 25, 25), (70, 255,255))
+		mask = cv2.inRange(hsv, (40, 128, 128), (176/2, 255, 255))
 
 		## slice the green
 		imask = mask>0
@@ -18,7 +19,8 @@ class CircleDetector:
 		# Green is only bright green items isolated 
 
 		image = green 
-
+		
+		cv2.imwrite('test.jpg', image)
 		# https://www.pyimagesearch.com/2016/02/08/opencv-shape-detection/
 		resized = imutils.resize(image, width=300)
 		ratio = image.shape[0] / float(resized.shape[0])
@@ -53,12 +55,17 @@ class CircleDetector:
 			# cv2.drawContours(image, [c], -1, (255, 0, 0), 2)
 			if shape == 'circle':
 				ret.append(f'{cX},{cY}')
+		if len(ret) > 100:
+			cv2.imwrite('e.jpg', img)
 		return '|'.join(ret)
 
 
 	def open_image(self, path):
 		return cv2.imread(path)
-
+	
+	def decode_image(self, f): 
+		return cv2.imdecode(np.frombuffer(f.read(), np.uint8), cv2.IMREAD_COLOR)
+	
 	def identify(self, c):
 		# initialize the shape name and approximate the contour
 		shape = "unidentified"
