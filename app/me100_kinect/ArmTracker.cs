@@ -57,16 +57,8 @@ namespace me100_kinect {
             JointType jointType1) {
                 
             Joint joint0 = skeleton.Joints[jointType0];
-            Trace.WriteLine(jointType0 + ": ");
-            // Trace.WriteLine(joint0.Position.X + " ");
-            // Trace.WriteLine(joint0.Position.Y + " ");
-            Trace.WriteLine(joint0.Position.Z + " ");
-
+            
             Joint joint1 = skeleton.Joints[jointType1];
-            Trace.WriteLine(jointType1 + ": ");
-            // Trace.WriteLine(joint1.Position.X + " ");
-            // Trace.WriteLine(joint1.Position.Y + " ");
-            Trace.WriteLine(joint1.Position.Z + " ");
 
             // If we can't find either of these joints, exit
             if (joint0.TrackingState == JointTrackingState.NotTracked ||
@@ -95,7 +87,7 @@ namespace me100_kinect {
 
             // Right Arm
             // this.drawBone(skeleton, drawingContext, JointType.ShoulderRight, JointType.ElbowRight);
-            this.drawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.WristRight);
+            this.drawBone(skeleton, drawingContext, JointType.ElbowRight, JointType.HandRight);
             // this.drawBone(skeleton, drawingContext, JointType.WristRight, JointType.HandRight);
 
             // Render Joints (yellow = inferred, green = tracked)
@@ -113,21 +105,31 @@ namespace me100_kinect {
             }
         }
 
-        private void drawRay(
+        private SkeletonPoint drawRay(
             SkeletonPoint p1, SkeletonPoint p2, 
             DrawingContext drawingContext, 
             float intersection) {
-                SkeletonPoint endpoint;
-                if (p1.Z > p2.Z) 
-                    endpoint = Utils.extendLine(p1, p2, 0);
-                else if (p1.Z < p2.Z) 
-                    endpoint = Utils.extendLine(p1, p2, 10);
-                else return;
                 
-                drawingContext.DrawLine(
-                    extendedBonePen, 
-                    this.skeletonPointToScreen(p1), 
-                    this.skeletonPointToScreen(endpoint));
+                // Either draw line towards the screen or to max depth
+                int rayEnd = 0;
+                if (p1.Z == p2.Z) rayEnd = (int) (p1.Z * 1000);
+                if (p1.Z < p2.Z) rayEnd = 10 * 1000;
+
+                // d points in format (x, y, mm)
+                DepthImagePoint d1 = sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(p1, DepthImageFormat.Resolution640x480Fps30);
+                DepthImagePoint d2 = sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(p2, DepthImageFormat.Resolution640x480Fps30);
+                
+                // Extends points in (x, y, mm) space
+                SkeletonPoint endpoint = Utils.extendLine(d1, d2, rayEnd);
+                Point e1 = this.skeletonPointToScreen(p1);
+                Point e2 = new Point(endpoint.X, endpoint.Y);
+                drawingContext.DrawLine(extendedBonePen, e1, e2);
+
+                // Convert back into depth space but in meters
+                SkeletonPoint ret = Utils.extendLine(d1, d2, intersection*1000);
+                ret.Z /= 1000;
+
+                return ret;
         }
 
         /* * * * * * * * * * *

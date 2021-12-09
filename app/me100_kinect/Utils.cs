@@ -9,14 +9,14 @@ namespace me100_kinect {
         }
 
         // Extends a line defined by p1 and p2 to a specified z distance
-        public static SkeletonPoint extendLine(SkeletonPoint p1, SkeletonPoint p2, float distance) {
+        public static SkeletonPoint extendLine(DepthImagePoint p1, DepthImagePoint p2, float distance) {
             // https://www.geeksforgeeks.org/equation-of-a-line-in-3d/
             SkeletonPoint diff = pointDiff(p2, p1);
             float l = diff.X; 
             float m = diff.Y; 
             float n = diff.Z;
 
-            float target = (distance - p1.Z) / n;
+            float target = (distance - p1.Depth) / n;
             float x3 = target * l + p1.X;
             float y3 = target * m + p1.Y;
             
@@ -39,6 +39,19 @@ namespace me100_kinect {
             ret.Z = p1.Z - p2.Z;
 
             return ret;
+        }
+
+        public static SkeletonPoint pointDiff(DepthImagePoint p1, DepthImagePoint p2) {
+            SkeletonPoint ret = new SkeletonPoint();
+            ret.X = p1.X - p2.X;
+            ret.Y = p1.Y - p2.Y;
+            ret.Z = p1.Depth - p2.Depth;
+
+            return ret;
+        }
+
+        public static SkeletonPoint createSkeletonPoint(DepthImagePoint p1) {
+            return createSkeletonPoint(p1.X, p1.Y, p1.Depth);
         }
 
         // Account for floating point error
