@@ -43,7 +43,7 @@ namespace me100_kinect {
          
         public abstract void initialize();
 
-        public abstract object performAction();
+        public abstract object performAction(string word);
     }
 
     public struct DeviceLocation {

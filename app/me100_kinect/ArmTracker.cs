@@ -43,7 +43,7 @@ namespace me100_kinect {
             this.sensor.ColorFrameReady += colorFrameReady;
         }
 
-        public override object performAction() { return null; }
+        public override object performAction(string action) { return null; }
 
        /* * * * * * * * * *
         *                 *
@@ -74,7 +74,7 @@ namespace me100_kinect {
                 joint1.TrackingState == JointTrackingState.Tracked)
                 drawPen = this.trackedBonePen;
 
-            this.drawRay(joint0.Position, joint1.Position, drawingContext, 0.0f);
+            this.drawRay(joint0.Position, joint1.Position, drawingContext);
             drawingContext.DrawLine(drawPen, this.skeletonPointToScreen(joint0.Position), this.skeletonPointToScreen(joint1.Position));
         }
 
@@ -105,10 +105,9 @@ namespace me100_kinect {
             }
         }
 
-        private SkeletonPoint drawRay(
+        private void drawRay(
             SkeletonPoint p1, SkeletonPoint p2, 
-            DrawingContext drawingContext, 
-            float intersection) {
+            DrawingContext drawingContext) {
                 
                 // Either draw line towards the screen or to max depth
                 int rayEnd = 0;
@@ -124,12 +123,24 @@ namespace me100_kinect {
                 Point e1 = this.skeletonPointToScreen(p1);
                 Point e2 = new Point(endpoint.X, endpoint.Y);
                 drawingContext.DrawLine(extendedBonePen, e1, e2);
+        }
 
-                // Convert back into depth space but in meters
-                SkeletonPoint ret = Utils.extendLine(d1, d2, intersection*1000);
-                ret.Z /= 1000;
+        // Returns the X, Y point created by continuing the line from p1 to p2 at depth `depth`
+        private Point isClose(SkeletonPoint p1, SkeletonPoint p2, float depth) {
+            // Convert back into depth space but in meters
+            // SkeletonPoint ret = Utils.extendLine(d1, d2, intersection * 1000);
+            
+            // d points in format (x, y, mm)
+            DepthImagePoint d1 = sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(p1, DepthImageFormat.Resolution640x480Fps30);
+            DepthImagePoint d2 = sensor.CoordinateMapper.MapSkeletonPointToDepthPoint(p2, DepthImageFormat.Resolution640x480Fps30);
 
-                return ret;
+            // Convert depth to mm
+            depth *= 1000;
+
+            // Extends points in (x, y, mm) space
+            SkeletonPoint endpoint = Utils.extendLine(d1, d2, depth);
+
+            return new Point(endpoint.X, endpoint.Y);
         }
 
         /* * * * * * * * * * *

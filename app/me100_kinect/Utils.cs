@@ -23,6 +23,22 @@ namespace me100_kinect {
             return createSkeletonPoint(x3, y3, distance);
         }
 
+        // Extends a line defined by p1 and p2 to a specified z distance
+        public static SkeletonPoint extendLine(SkeletonPoint p1, SkeletonPoint p2, float distance)
+        {
+            // https://www.geeksforgeeks.org/equation-of-a-line-in-3d/
+            SkeletonPoint diff = pointDiff(p2, p1);
+            float l = diff.X;
+            float m = diff.Y;
+            float n = diff.Z;
+
+            float target = (distance - p1.Z) / n;
+            float x3 = target * l + p1.X;
+            float y3 = target * m + p1.Y;
+
+            return createSkeletonPoint(x3, y3, distance);
+        }
+
         public static SkeletonPoint createSkeletonPoint(float X, float Y, float Z) {
             SkeletonPoint ret = new SkeletonPoint();
             ret.X = X;

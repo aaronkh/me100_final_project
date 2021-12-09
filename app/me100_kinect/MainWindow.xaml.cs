@@ -8,6 +8,11 @@
     using Microsoft.Kinect;
     using System.Diagnostics;
 
+    using Microsoft.Speech.AudioFormat;
+    using Microsoft.Speech.Recognition;
+    using System.Windows.Documents;
+    using System.Text;
+
     public partial class MainWindow : Window {
         private KinectSensor sensor;
 
@@ -66,6 +71,7 @@
                 // Start the sensor!
                 try {
                     this.sensor.Start();
+                    initSpeechRecognizer();
                 } catch (IOException err) {
                     this.sensor = null;
                     this.statusBarText.Text = "Error opening Kinect";
@@ -79,9 +85,17 @@
         }
 
         private void WindowClosing(object sender, System.ComponentModel.CancelEventArgs e) {
-            if (this.sensor != null) this.sensor.Stop();
+            if (this.sensor != null) {
+                this.sensor.AudioSource.Stop();
+                this.sensor.Stop();
+                this.sensor = null;
+            }
             for (int i = 0; i < this.controllers.Length; ++i)
                 this.controllers[i].blocked = true;
+            if (this.speechEngine != null) {
+                this.speechEngine.SpeechRecognized -= speechRecognized;
+                this.speechEngine.RecognizeAsyncStop();
+            }
         }
 
         private void onKeyPress(object _, KeyEventArgs e) {
@@ -92,7 +106,7 @@
                 case Key.Space:
                     // Main action
                     for (int i = 0; i < this.controllers.Length; ++i) 
-                        this.controllers[i].performAction();
+                        this.controllers[i].performAction("switch");
                     return;
                 case Key.M:
                     // Switch modes
@@ -139,9 +153,85 @@
 
         /* * * * * * * * * *
          *                 *
-         * KINECT METHODS  *
+         * SPEECH METHODS  *
          *                 *
          * * * * * * * * * */
-        
+        // "In a full-fledged application, the SpeechRecognitionEngine object should be properly disposed. For the sake of simplicity, we're omitting that code in this sample."
+        private SpeechRecognitionEngine speechEngine;
+        private static RecognizerInfo getKinectRecognizer() {
+            foreach (RecognizerInfo recognizer in SpeechRecognitionEngine.InstalledRecognizers()) {
+                string value;
+                recognizer.AdditionalInfo.TryGetValue("Kinect", out value);
+                if ("True".Equals(value, StringComparison.OrdinalIgnoreCase) && "en-US".Equals(recognizer.Culture.Name, StringComparison.OrdinalIgnoreCase)) {
+                    return recognizer;
+                }
+            }
+
+            return null;
+        }
+
+        private string[] words = { 
+            "on", 
+            "off",
+            "switch",
+            "save",
+            "stop",
+            "mode",
+            "capture"
+        };
+
+        private void speechRecognized(object sender, SpeechRecognizedEventArgs e) {
+            // Speech utterance confidence below which we treat speech as if it hadn't been heard
+            const double ConfidenceThreshold = 0.3;
+
+            if (e.Result.Confidence >= ConfidenceThreshold) {
+                string word = e.Result.Semantics.Value.ToString().ToLower();
+                Trace.WriteLine("word found: "+word);
+                switch (word) {
+                    case "stop":
+                        Close();
+                        return;
+                    case "mode":
+                        cycleModes();
+                        return;
+                    case "capture":
+                        this.controllers[currentMode].saveImage("out.jpg");
+                        return;
+                    default:
+                        this.controllers[currentMode].performAction(word);
+                        return;
+                }
+            }
+        }
+        private void initSpeechRecognizer() {
+            RecognizerInfo ri = getKinectRecognizer();
+            Trace.Write("Kinect recognizer OK: ");
+            Trace.WriteLine(ri != null);
+            if (ri != null) {
+                this.speechEngine = new SpeechRecognitionEngine(ri.Id);
+
+                var choices = new Choices();
+                foreach (string s in words) {
+                    choices.Add(new SemanticResultValue(s, s.ToUpper()));
+                }
+                
+                GrammarBuilder gb = new GrammarBuilder { Culture = ri.Culture };
+                gb.Append(choices);
+                speechEngine.LoadGrammar(new Grammar(gb));
+
+
+                speechEngine.SpeechRecognized += speechRecognized;
+
+                // For long recognition sessions (a few hours or more), it may be beneficial to turn off adaptation of the acoustic model. 
+                // This will prevent recognition accuracy from degrading over time.
+                speechEngine.UpdateRecognizerSetting("AdaptationOn", 0);
+
+                // We also recommend, for long recognition sessions, that the SpeechRecognitionEngine be recycled 
+                // (destroyed and recreated) periodically, say every 2 minutes based on your resource constraints.
+                speechEngine.SetInputToAudioStream(
+                    sensor.AudioSource.Start(), new SpeechAudioFormatInfo(EncodingFormat.Pcm, 16000, 16, 1, 32000, 2, null));
+                speechEngine.RecognizeAsync(RecognizeMode.Multiple);
+            }
+        }
     }
 }

@@ -24,9 +24,7 @@ namespace me100_kinect {
         private readonly int WIDTH = 640;
         private readonly bool USE_MULTIPLE_DEVICES = false;
 
-        private WriteableBitmap depthBitmap;
         private DepthImagePixel[] depthPixels;
-        private byte[] depthRGB;
 
         private List<DeviceLocation> tempDeviceLocations = new List<DeviceLocation>();
         private int frameCounter = 1;
@@ -41,7 +39,7 @@ namespace me100_kinect {
             this.sensor.DepthFrameReady += depthFrameReady;
         }
 
-        public override object performAction() {
+        public override object performAction(string _) {
             deviceLocations.Clear();
             foreach (DeviceLocation loc in tempDeviceLocations) {
                 deviceLocations.Add(loc);
