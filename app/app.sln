@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 2012 for Windows Desktop
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "me100_kinect", "me100_kinect\me100_kinect.csproj", "{D0461511-0721-489D-BF90-DF1692F7F148}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tst", "UnitTestProject1\tst.csproj", "{987AD09A-92F7-4DB5-BD81-1432506A743C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{D0461511-0721-489D-BF90-DF1692F7F148}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0461511-0721-489D-BF90-DF1692F7F148}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0461511-0721-489D-BF90-DF1692F7F148}.Release|Any CPU.Build.0 = Release|Any CPU
+		{987AD09A-92F7-4DB5-BD81-1432506A743C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{987AD09A-92F7-4DB5-BD81-1432506A743C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{987AD09A-92F7-4DB5-BD81-1432506A743C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{987AD09A-92F7-4DB5-BD81-1432506A743C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

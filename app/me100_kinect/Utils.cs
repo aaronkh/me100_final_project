@@ -1,7 +1,7 @@
 ﻿using Microsoft.Kinect;
 
 namespace me100_kinect {
-    static class Utils {
+    public static class Utils {
         public static float getDistance(SkeletonPoint p1, SkeletonPoint p2) {
             SkeletonPoint diff = pointDiff(p1, p2);
             float sum = diff.X*diff.X + diff.Y*diff.Y + diff.Z*diff.Z;
@@ -41,5 +41,9 @@ namespace me100_kinect {
             return ret;
         }
 
+        // Account for floating point error
+        public static bool isClose(float f1, float f2) {
+            return System.Math.Abs(f1 - f2) < 0.01;
+        }
     }
 }
