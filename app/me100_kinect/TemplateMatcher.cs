@@ -17,7 +17,7 @@ namespace me100_kinect {
         // Waiting for response from Python service 
         private bool isWaiting = false;
         private readonly Brush translucentBrush = new SolidColorBrush(Color.FromArgb(99, 0, 0, 0));
-        private readonly Pen newDevicePen = new Pen(Brushes.Cyan, 2);
+        private readonly Pen newDevicePen = new Pen(Brushes.Magenta, 2);
         private readonly Pen devicePen = new Pen(Brushes.AliceBlue, 2);
         private readonly DepthImageFormat DEPTH_IMAGE_FORMAT = DepthImageFormat.Resolution640x480Fps30;
         private readonly int HEIGHT = 480;
@@ -39,8 +39,14 @@ namespace me100_kinect {
             this.sensor.DepthFrameReady += depthFrameReady;
         }
 
-        public override object performAction(string _) {
-            deviceLocations.Clear();
+        public override object performAction(string action) {
+            if (action == "clear") {
+                deviceLocations.Clear();
+                return null;
+            } else if (action == "save") {
+                deviceLocations.Clear();
+            }
+            
             foreach (DeviceLocation loc in tempDeviceLocations) {
                 deviceLocations.Add(loc);
             }
@@ -97,7 +103,7 @@ namespace me100_kinect {
                     float z = depthPixels[(y-1)*WIDTH + x].Depth;
                     
                     z /= 1000.0f; // Convert mm to m for depth points
-                    if(z == 0) // for points with uncertain depth kinect will report distance = 0
+                    if(z != 0) // for points with uncertain depth kinect will report distance = 0
                         tempDeviceLocations.Add(new DeviceLocation(Utils.createSkeletonPoint(x, y, z)));
                 }
                 

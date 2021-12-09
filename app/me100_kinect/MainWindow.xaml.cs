@@ -174,10 +174,12 @@
             "on", 
             "off",
             "switch",
-            "save",
             "stop",
             "mode",
-            "capture"
+            "capture",
+            "save",
+            "insert",
+            "clear"
         };
 
         private void speechRecognized(object sender, SpeechRecognizedEventArgs e) {

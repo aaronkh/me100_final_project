@@ -74,5 +74,9 @@ namespace me100_kinect {
         public static bool isClose(float f1, float f2) {
             return System.Math.Abs(f1 - f2) < 0.01;
         }
+
+        public static string skelPointFormat(SkeletonPoint p) {
+            return p.X + "," + p.Y + "," + p.Z;
+        }
     }
 }

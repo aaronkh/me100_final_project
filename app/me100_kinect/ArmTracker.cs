@@ -1,6 +1,8 @@
 ﻿using Microsoft.Kinect;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -9,6 +11,8 @@ using System.Windows.Media.Imaging;
 namespace me100_kinect {
     class ArmTracker : KinectController {
         public override string mode { get { return "Body tracking"; } }
+
+        private readonly int INTERACTION_THRESHOLD = 60;
 
         private readonly Brush translucentBrush = new SolidColorBrush(Color.FromArgb(99, 0, 0, 0));
 
@@ -22,6 +26,7 @@ namespace me100_kinect {
 
         private readonly Pen deviceOnPen = new Pen(Brushes.Yellow, 2);
         private readonly Pen deviceOffPen = new Pen(Brushes.Blue, 2);
+        private readonly Pen deviceHighlightPen = new Pen(Brushes.Magenta, 2);
 
         private readonly HashSet<JointType> armJoints = new HashSet<JointType> {
             JointType.ElbowLeft,
@@ -29,6 +34,8 @@ namespace me100_kinect {
             JointType.HandLeft,
             JointType.HandRight
         };
+
+        private float[] deviceDistance;
 
         public ArmTracker(KinectSensor sensor): base(sensor) { }
 
@@ -43,7 +50,27 @@ namespace me100_kinect {
             this.sensor.ColorFrameReady += colorFrameReady;
         }
 
-        public override object performAction(string action) { return null; }
+        public override object performAction(string action) {
+            for(int i = 0; i < deviceLocations.Count; ++i) {
+                if(deviceDistance[i] <= INTERACTION_THRESHOLD) {
+                    DeviceLocation d = deviceLocations[i];
+                    switch(action) { // TODO: perform network calls 
+                        case "on":
+                            d.isOn = true;
+                            break;
+                        case "off":
+                            d.isOn = false;
+                            break;
+                        case "switch":
+                            d.isOn = !d.isOn;
+                            break;
+                    }
+                    deviceLocations[i] = d;
+                }
+            }
+    
+            return null;
+        }
 
        /* * * * * * * * * *
         *                 *
@@ -75,10 +102,20 @@ namespace me100_kinect {
                 drawPen = this.trackedBonePen;
 
             this.drawRay(joint0.Position, joint1.Position, drawingContext);
+
+            // Loop through devices and start highlighting them 
+            this.highlightDevices(joint0.Position, joint1.Position);
+
             drawingContext.DrawLine(drawPen, this.skeletonPointToScreen(joint0.Position), this.skeletonPointToScreen(joint1.Position));
         }
 
         private void drawArmsAndColor(Skeleton skeleton, DrawingContext drawingContext) {
+            if (deviceDistance == null || deviceDistance.Length != deviceLocations.Count) {
+                deviceDistance = new float[deviceLocations.Count];
+            }
+
+            for (int i = 0; i < deviceDistance.Length; ++i)
+                deviceDistance[i] = INTERACTION_THRESHOLD + 1;
 
             // Left Arm
             // this.drawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft);
@@ -126,7 +163,7 @@ namespace me100_kinect {
         }
 
         // Returns the X, Y point created by continuing the line from p1 to p2 at depth `depth`
-        private Point isClose(SkeletonPoint p1, SkeletonPoint p2, float depth) {
+        private Point extendLine(SkeletonPoint p1, SkeletonPoint p2, float depth) {
             // Convert back into depth space but in meters
             // SkeletonPoint ret = Utils.extendLine(d1, d2, intersection * 1000);
             
@@ -141,6 +178,25 @@ namespace me100_kinect {
             SkeletonPoint endpoint = Utils.extendLine(d1, d2, depth);
 
             return new Point(endpoint.X, endpoint.Y);
+        }
+
+        private void highlightDevices(SkeletonPoint p1, SkeletonPoint p2) { 
+            
+            for (int i = 0; i < deviceLocations.Count; ++i) {
+                DeviceLocation loc = deviceLocations[i];
+                
+                // Extend line to depth of loc 
+                Point intersection = extendLine(p1, p2, loc.location.Z);
+                
+                SkeletonPoint skelPoint = Utils.createSkeletonPoint((float) intersection.X, (float) intersection.Y, loc.location.Z);
+
+                //Trace.WriteLine(Utils.skelPointFormat(skelPoint));
+                //Trace.WriteLine(Utils.skelPointFormat(loc.location));
+                //Trace.WriteLine(Utils.getDistance(skelPoint, loc.location));
+                //Trace.WriteLine("-----");
+
+                deviceDistance[i] = System.Math.Min(deviceDistance[i], Utils.getDistance(skelPoint, loc.location));
+            }
         }
 
         /* * * * * * * * * * *
@@ -175,22 +231,33 @@ namespace me100_kinect {
 
                 if (skeletons.Length != 0) {
                     foreach (Skeleton skel in skeletons) {
-                        if (skel.TrackingState == SkeletonTrackingState.Tracked)
+                        if (skel.TrackingState == SkeletonTrackingState.Tracked) {
                             this.drawArmsAndColor(skel, dc);
+                            break;
+                        }
                     }
                 }
 
-                if (deviceLocations != null) {
-                    foreach (DeviceLocation loc in deviceLocations) {
-                        SkeletonPoint pt = loc.location;
-                        dc.DrawEllipse(null, loc.isOn?deviceOnPen:deviceOffPen, new Point(pt.X, pt.Y), 20, 20);
-                    }
+                for (int i = 0; i < deviceLocations.Count; ++i) {
+                    DeviceLocation loc = deviceLocations[i];
+                    SkeletonPoint pt = loc.location;
+                    Pen devicePen = loc.isOn ? deviceOnPen : deviceOffPen;
+
+                    if (deviceDistance != null && deviceDistance[i] < INTERACTION_THRESHOLD)
+                        devicePen = deviceHighlightPen;
+
+                    dc.DrawEllipse(null, devicePen, new Point(pt.X, pt.Y), 20, 20);
+                    FormattedText text = new FormattedText(
+                        String.Format("{0:0.00}", pt.Z), CultureInfo.GetCultureInfo("en-us"),
+                        FlowDirection.LeftToRight,
+                        new Typeface("Verdana"), 16,
+                        devicePen.Brush);
+                    text.TextAlignment = TextAlignment.Center;
+                    dc.DrawText(text, new Point(pt.X, pt.Y));
                 }
 
                 // prevent drawing outside of our render area
                 this.draw.ClipGeometry = new RectangleGeometry(new Rect(0.0, 0.0, drawWidth, drawHeight));
-
-                
             }
         }
 
