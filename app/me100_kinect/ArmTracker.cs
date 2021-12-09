@@ -12,7 +12,7 @@ namespace me100_kinect {
     class ArmTracker : KinectController {
         public override string mode { get { return "Body tracking"; } }
 
-        private readonly int INTERACTION_THRESHOLD = 60;
+        private readonly int INTERACTION_THRESHOLD = 30;
 
         private readonly Brush translucentBrush = new SolidColorBrush(Color.FromArgb(99, 0, 0, 0));
 
@@ -25,7 +25,7 @@ namespace me100_kinect {
         private readonly Pen extendedBonePen = new Pen(Brushes.Magenta, 2);
 
         private readonly Pen deviceOnPen = new Pen(Brushes.Yellow, 2);
-        private readonly Pen deviceOffPen = new Pen(Brushes.Blue, 2);
+        private readonly Pen deviceOffPen = new Pen(Brushes.CornflowerBlue, 2);
         private readonly Pen deviceHighlightPen = new Pen(Brushes.Magenta, 2);
 
         private readonly HashSet<JointType> armJoints = new HashSet<JointType> {
@@ -52,17 +52,24 @@ namespace me100_kinect {
 
         public override object performAction(string action) {
             for(int i = 0; i < deviceLocations.Count; ++i) {
-                if(deviceDistance[i] <= INTERACTION_THRESHOLD) {
-                    DeviceLocation d = deviceLocations[i];
-                    switch(action) { // TODO: perform network calls 
+                DeviceLocation d = deviceLocations[i];
+                if(deviceDistance[i] <= d.radius + INTERACTION_THRESHOLD) { 
+                    switch(action) {
                         case "on":
                             d.isOn = true;
+                            HttpClientWrapper.get(HttpClientWrapper.ESP32_IP+"/on");
                             break;
                         case "off":
                             d.isOn = false;
+                            HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/off");
                             break;
                         case "switch":
                             d.isOn = !d.isOn;
+                            if (d.isOn) {
+                                HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/on");
+                            } else {
+                                HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/on");
+                            }
                             break;
                     }
                     deviceLocations[i] = d;
@@ -115,7 +122,7 @@ namespace me100_kinect {
             }
 
             for (int i = 0; i < deviceDistance.Length; ++i)
-                deviceDistance[i] = INTERACTION_THRESHOLD + 1;
+                deviceDistance[i] = Int32.MaxValue;
 
             // Left Arm
             // this.drawBone(skeleton, drawingContext, JointType.ShoulderLeft, JointType.ElbowLeft);
@@ -243,17 +250,13 @@ namespace me100_kinect {
                     SkeletonPoint pt = loc.location;
                     Pen devicePen = loc.isOn ? deviceOnPen : deviceOffPen;
 
-                    if (deviceDistance != null && deviceDistance[i] < INTERACTION_THRESHOLD)
+                    if (deviceDistance != null && deviceDistance[i] <= loc.radius + INTERACTION_THRESHOLD)
                         devicePen = deviceHighlightPen;
 
-                    dc.DrawEllipse(null, devicePen, new Point(pt.X, pt.Y), 20, 20);
-                    FormattedText text = new FormattedText(
-                        String.Format("{0:0.00}", pt.Z), CultureInfo.GetCultureInfo("en-us"),
-                        FlowDirection.LeftToRight,
-                        new Typeface("Verdana"), 16,
-                        devicePen.Brush);
-                    text.TextAlignment = TextAlignment.Center;
-                    dc.DrawText(text, new Point(pt.X, pt.Y));
+                    Utils.drawDeviceCircle(dc, new Point(pt.X, pt.Y), loc.radius, devicePen, String.Format("{0:0.00}m", pt.Z));
+                    dc.PushOpacity(0.25);
+                    Utils.drawDeviceCircle(dc, new Point(pt.X, pt.Y), loc.radius + INTERACTION_THRESHOLD, devicePen, "");
+                    dc.PushOpacity(1.0);
                 }
 
                 // prevent drawing outside of our render area

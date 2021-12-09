@@ -49,10 +49,12 @@ namespace me100_kinect {
     public struct DeviceLocation {
         public SkeletonPoint location;
         public bool isOn;
+        public int radius;
 
-        public DeviceLocation(SkeletonPoint pt) {
+        public DeviceLocation(SkeletonPoint pt, int radius) {
             this.location = pt;
             this.isOn = false;
+            this.radius = radius;
         }
     }
 }

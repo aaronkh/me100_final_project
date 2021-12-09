@@ -14,6 +14,10 @@ namespace me100_kinect {
             return client;
         }
 
+        public static async Task<System.Net.Http.HttpResponseMessage> get(string url) {
+            return await getInstance().GetAsync(url);
+    }
+
         public static async Task<System.Net.Http.HttpResponseMessage> post(string url, string body) {
             HttpContent content = new StringContent(body, Encoding.UTF8);
             return await getInstance().PostAsync(url, content);

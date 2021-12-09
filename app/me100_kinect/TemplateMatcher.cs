@@ -18,15 +18,13 @@ namespace me100_kinect {
         private bool isWaiting = false;
         private readonly Brush translucentBrush = new SolidColorBrush(Color.FromArgb(99, 0, 0, 0));
         private readonly Pen newDevicePen = new Pen(Brushes.Magenta, 2);
-        private readonly Pen devicePen = new Pen(Brushes.AliceBlue, 2);
+        private readonly Pen devicePen = new Pen(Brushes.Lime, 2);
         private readonly DepthImageFormat DEPTH_IMAGE_FORMAT = DepthImageFormat.Resolution640x480Fps30;
-        private readonly int HEIGHT = 480;
         private readonly int WIDTH = 640;
-        private readonly bool USE_MULTIPLE_DEVICES = false;
 
         private DepthImagePixel[] depthPixels;
 
-        private List<DeviceLocation> tempDeviceLocations = new List<DeviceLocation>();
+        private DeviceLocation? tempDeviceLocation = null;
         private int frameCounter = 1;
 
         public TemplateMatcher(KinectSensor sensor): base(sensor) { }
@@ -47,10 +45,10 @@ namespace me100_kinect {
                 deviceLocations.Clear();
             }
             
-            foreach (DeviceLocation loc in tempDeviceLocations) {
-                deviceLocations.Add(loc);
-            }
-            tempDeviceLocations.Clear();
+            if(tempDeviceLocation != null)
+                deviceLocations.Add((DeviceLocation) tempDeviceLocation);
+
+            tempDeviceLocation = null;
             return null; 
         }
 
@@ -88,23 +86,22 @@ namespace me100_kinect {
                 if (deviceLocations == null) return;
                 string content = await res.Content.ReadAsStringAsync();
                 string[] pts = content.Split('|');
-                tempDeviceLocations.Clear();
-                
-                foreach (string point in pts) {
-                    string pt;
-                    if (!USE_MULTIPLE_DEVICES) pt = pts[0];
-                    else pt = point;
-                    if (pt.Length == 0) continue;
+     
+                if (pts.Length != 0 && pts[0] != "") {
+                    string pt = pts[0];
                     string[] coords = pt.Split(',');
                     
                     // Divide by 2 since video stream has 2x resolution
                     int x = Int32.Parse(coords[0])/2;
                     int y = Int32.Parse(coords[1])/2;
+                    int rad = Int32.Parse(coords[2])/2;
                     float z = depthPixels[(y-1)*WIDTH + x].Depth;
                     
                     z /= 1000.0f; // Convert mm to m for depth points
                     if(z != 0) // for points with uncertain depth kinect will report distance = 0
-                        tempDeviceLocations.Add(new DeviceLocation(Utils.createSkeletonPoint(x, y, z)));
+                        tempDeviceLocation = new DeviceLocation(Utils.createSkeletonPoint(x, y, z), rad); 
+                } else {
+                    tempDeviceLocation = null;
                 }
                 
             } catch(Exception e) {
@@ -157,25 +154,16 @@ namespace me100_kinect {
                     colorBitmap,
                     new Rect(0.0d, 0.0d, drawWidth, drawHeight));
                 
-                if (tempDeviceLocations != null) {
-                    foreach (DeviceLocation loc in tempDeviceLocations) {
-                        SkeletonPoint pt = loc.location;
-                        dc.DrawEllipse(null, newDevicePen, new Point(pt.X, pt.Y), 20, 20);
-                    }
+                if (tempDeviceLocation != null) {
+                    DeviceLocation d = ((DeviceLocation) tempDeviceLocation);
+                    SkeletonPoint pt = d.location;
+                    dc.DrawEllipse(null, newDevicePen, new Point(pt.X, pt.Y), d.radius, d.radius);
                 }
 
                 if (deviceLocations != null) {
                     foreach (DeviceLocation loc in deviceLocations) {
                         SkeletonPoint pt = loc.location;
-                        dc.DrawEllipse(null, devicePen, new Point(pt.X, pt.Y), 20, 20);
-
-                        FormattedText text = new FormattedText(
-                            String.Format("{0:0.00}", pt.Z), CultureInfo.GetCultureInfo("en-us"),
-                            FlowDirection.LeftToRight, 
-                            new Typeface("Verdana"), 16, 
-                            devicePen.Brush);
-                        text.TextAlignment = TextAlignment.Center;
-                        dc.DrawText(text, new Point(pt.X, pt.Y));
+                        Utils.drawDeviceCircle(dc, new Point(pt.X, pt.Y), loc.radius, devicePen, String.Format("{0:0.00}m", pt.Z));
                     }
                 }
             }

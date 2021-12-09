@@ -43,6 +43,7 @@ class CircleDetector:
 			# compute the center of the contour, then detect the name of the
 			# shape using only the contour
 			M = cv2.moments(c)
+			area = round(np.sqrt(M['m00']/3.1415))
 			ratio = 1.0
 			cX = int((M["m10"] / M["m00"]) * ratio)
 			cY = int((M["m01"] / M["m00"]) * ratio)
@@ -54,7 +55,7 @@ class CircleDetector:
 			# c = c.astype("int")
 			# cv2.drawContours(image, [c], -1, (255, 0, 0), 2)
 			if shape == 'circle':
-				ret.append(f'{cX},{cY}')
+				ret.append(f'{cX},{cY},{area}')
 		if len(ret) > 100:
 			cv2.imwrite('e.jpg', img)
 		return '|'.join(ret)

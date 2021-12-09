@@ -1,4 +1,7 @@
 ﻿using Microsoft.Kinect;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Media;
 
 namespace me100_kinect {
     public static class Utils {
@@ -77,6 +80,19 @@ namespace me100_kinect {
 
         public static string skelPointFormat(SkeletonPoint p) {
             return p.X + "," + p.Y + "," + p.Z;
+        }
+
+        public static void drawDeviceCircle(DrawingContext dc, Point pt, int radius, Pen pen, string text) { 
+            dc.DrawEllipse(pen.Brush, pen, pt, radius, radius);
+
+            FormattedText t = new FormattedText(
+                text, CultureInfo.GetCultureInfo("en-us"),
+                FlowDirection.LeftToRight, 
+                new Typeface("Verdana"), 16, 
+                pen.Brush);
+            t.TextAlignment = TextAlignment.Center;
+            dc.DrawText(t, new Point(pt.X, pt.Y + radius + 12));
+        
         }
     }
 }
