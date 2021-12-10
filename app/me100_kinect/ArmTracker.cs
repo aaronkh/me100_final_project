@@ -64,12 +64,12 @@ namespace me100_kinect {
                             HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/off");
                             break;
                         case "switch":
-                            d.isOn = !d.isOn;
                             if (d.isOn) {
-                                HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/on");
+                                HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/off");
                             } else {
                                 HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/on");
                             }
+                            d.isOn = !d.isOn;
                             break;
                     }
                     deviceLocations[i] = d;

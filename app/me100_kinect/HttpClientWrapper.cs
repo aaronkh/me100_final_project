@@ -1,11 +1,12 @@
 ﻿using System.Text;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Diagnostics;
 
 namespace me100_kinect {
     static class HttpClientWrapper {
         public const string PYTHON_API_ADDRESS = "http://localhost:2021";
-        public const string ESP32_IP = "192.168.223.213";
+        public const string ESP32_IP = "http://192.168.223.213/27";
 
         private static HttpClient client;
 
@@ -14,8 +15,8 @@ namespace me100_kinect {
             return client;
         }
 
-        public static async Task<System.Net.Http.HttpResponseMessage> get(string url) {
-            return await getInstance().GetAsync(url);
+        public static Task<System.Net.Http.HttpResponseMessage> get(string url) {
+            return getInstance().GetAsync(url);
     }
 
         public static async Task<System.Net.Http.HttpResponseMessage> post(string url, string body) {
