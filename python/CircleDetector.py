@@ -6,7 +6,6 @@ class CircleDetector:
 	def __init__(self):
 		pass
 	def process(self, img):
-		cv2.imwrite('in.jpg', img)
 		hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 		## mask of green (36,25,25) ~ (86, 255,255)
 		# mask = cv2.inRange(hsv, (36, 25, 25), (86, 255,255))
@@ -31,10 +30,10 @@ class CircleDetector:
 		kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
 		close = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
 		close = cv2.bitwise_not(gray)
-		cv2.imwrite('test.jpg', gray)
 		return close 
 
 	def get_centers(self, img):
+		img = cv2.bitwise_not(img)
 		cnts = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 		cnts = imutils.grab_contours(cnts)
 		
@@ -54,10 +53,10 @@ class CircleDetector:
 			# c *= ratio
 			# c = c.astype("int")
 			# cv2.drawContours(image, [c], -1, (255, 0, 0), 2)
+
 			if shape == 'circle':
 				ret.append(f'{cX},{cY},{area}')
-		if len(ret) > 100:
-			cv2.imwrite('e.jpg', img)
+			cv2.circle(img, (cX, cY), 20, (0, 0, 255), 10)
 		return '|'.join(ret)
 
 

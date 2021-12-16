@@ -111,8 +111,8 @@ namespace me100_kinect {
 
             this.drawRay(joint0.Position, joint1.Position, drawingContext);
 
-            deviceLocations.Clear();
-            deviceLocations.Add(new DeviceLocation(Utils.createSkeletonPoint(300, 200, 2), 10));
+            // deviceLocations.Clear();
+            // deviceLocations.Add(new DeviceLocation(Utils.createSkeletonPoint(300, 200, 2), 10));
 
             // Loop through devices and start highlighting them 
             this.highlightDevices(joint0.Position, joint1.Position);
