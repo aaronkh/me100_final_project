@@ -51,9 +51,10 @@ namespace me100_kinect {
         }
 
         public override object performAction(string action) {
+            
             for(int i = 0; i < deviceLocations.Count; ++i) {
                 DeviceLocation d = deviceLocations[i];
-                if(deviceDistance[i] <= d.radius + INTERACTION_THRESHOLD) { 
+                if(true) { 
                     switch(action) {
                         case "on":
                             d.isOn = true;
@@ -63,7 +64,7 @@ namespace me100_kinect {
                             d.isOn = false;
                             HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/off");
                             break;
-                        case "switch":
+                        case "switch":  
                             if (d.isOn) {
                                 HttpClientWrapper.get(HttpClientWrapper.ESP32_IP + "/off");
                             } else {
@@ -110,6 +111,9 @@ namespace me100_kinect {
 
             this.drawRay(joint0.Position, joint1.Position, drawingContext);
 
+            deviceLocations.Clear();
+            deviceLocations.Add(new DeviceLocation(Utils.createSkeletonPoint(300, 200, 2), 10));
+
             // Loop through devices and start highlighting them 
             this.highlightDevices(joint0.Position, joint1.Position);
 
@@ -118,7 +122,7 @@ namespace me100_kinect {
 
         private void drawArmsAndColor(Skeleton skeleton, DrawingContext drawingContext) {
             if (deviceDistance == null || deviceDistance.Length != deviceLocations.Count) {
-                deviceDistance = new float[deviceLocations.Count];
+                deviceDistance = new float[1];
             }
 
             for (int i = 0; i < deviceDistance.Length; ++i)
@@ -201,6 +205,7 @@ namespace me100_kinect {
                 //Trace.WriteLine(Utils.skelPointFormat(loc.location));
                 //Trace.WriteLine(Utils.getDistance(skelPoint, loc.location));
                 //Trace.WriteLine("-----");
+
 
                 deviceDistance[i] = System.Math.Min(deviceDistance[i], Utils.getDistance(skelPoint, loc.location));
             }

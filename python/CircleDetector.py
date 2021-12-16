@@ -20,7 +20,6 @@ class CircleDetector:
 
 		image = green 
 		
-		cv2.imwrite('test.jpg', image)
 		# https://www.pyimagesearch.com/2016/02/08/opencv-shape-detection/
 		resized = imutils.resize(image, width=300)
 		ratio = image.shape[0] / float(resized.shape[0])
@@ -31,7 +30,8 @@ class CircleDetector:
 		thresh = cv2.threshold(sharpen,160,255, cv2.THRESH_BINARY_INV)[1]
 		kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
 		close = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
-		close = cv2.bitwise_not(close)
+		close = cv2.bitwise_not(gray)
+		cv2.imwrite('test.jpg', gray)
 		return close 
 
 	def get_centers(self, img):

@@ -191,7 +191,7 @@
                 Trace.WriteLine("word found: "+word);
                 switch (word) {
                     case "stop":
-                        Close();
+                        // Close();
                         return;
                     case "mode":
                         cycleModes();

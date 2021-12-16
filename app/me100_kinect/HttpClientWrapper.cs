@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace me100_kinect {
     static class HttpClientWrapper {
         public const string PYTHON_API_ADDRESS = "http://localhost:2021";
-        public const string ESP32_IP = "http://192.168.223.213/27";
+        public const string ESP32_IP = "http://10.10.10.27/27";
 
         private static HttpClient client;
 
